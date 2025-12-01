@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Student Registration System</h1>
+            <nav>
+                <a href="{{ url_for('register') }}">Register Student</a>
+                <a href="{{ url_for('view_students') }}" class="active">View Students</a>
+            </nav>
+        </header>
+
+        <main>
+            <div class="student-detail-container">
+                <div class="page-header">
+                    <h2>Student Details</h2>
+                    <a href="{{ url_for('view_students') }}" class="btn btn-secondary">Back to Students</a>
+                </div>
+
+                {% if student %}
+                    <div class="student-card">
+                        <div class="student-header">
+                            <h3>{{ student.first_name }} {{ student.last_name }}</h3>
+                            <span class="student-id">ID: {{ student.id }}</span>
+                        </div>
+                        
+                        <div class="student-info">
+                            <div class="info-row">
+                                <label>Email:</label>
+                                <span>{{ student.email }}</span>
+                            </div>
+                            
+                            <div class="info-row">
+                                <label>Phone:</label>
+                                <span>{{ student.phone or 'Not provided' }}</span>
+                            </div>
+                            
+                            <div class="info-row">
+                                <label>Date of Birth:</label>
+                                <span>{{ student.date_of_birth or 'Not provided' }}</span>
+                            </div>
+                            
+                            <div class="info-row">
+                                <label>Address:</label>
+                                <span>{{ student.address or 'Not provided' }}</span>
+                            </div>
+                            
+                            <div class="info-row">
+                                <label>Registration Date:</label>
+                                <span>{{ student.registration_date }}</span>
+                            </div>
+                        </div>
+
+                        <div class="student-actions">
+                            <a href="{{ url_for('view_students') }}" class="btn btn-secondary">Back to List</a>
+                            <form method="POST" action="{{ url_for('delete_student', student_id=student.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this student?')">Delete Student</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Student Registration System. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
