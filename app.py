@@ -91,19 +91,72 @@ def delete_student(student_id):
     flash('Student deleted successfully!', 'success')
     return redirect(url_for('view_students'))
 
-@app.route('/api/students')
+@app.route('/api/students', methods=['GET', 'POST'])
 def api_students():
-    """API endpoint to get all students in JSON format"""
+    """API endpoint to get all students in JSON format or create a new student"""
+    if request.method == 'GET':
+        conn = get_db_connection()
+        students = conn.execute('SELECT * FROM students ORDER BY registration_date DESC').fetchall()
+        conn.close()
+
+        # Convert to list of dictionaries
+        students_list = []
+        for student in students:
+            students_list.append(dict(student))
+
+        return jsonify(students_list)
+
+    elif request.method == 'POST':
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'No input data provided'}), 400
+
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        email = data.get('email')
+        phone = data.get('phone')
+        date_of_birth = data.get('date_of_birth')
+        address = data.get('address')
+
+        # Basic validation
+        if not all([first_name, last_name, email]):
+             return jsonify({'error': 'First name, last name, and email are required'}), 400
+
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            cursor.execute('''
+                INSERT INTO students (first_name, last_name, email, phone, date_of_birth, address)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (first_name, last_name, email, phone, date_of_birth, address))
+
+            student_id = cursor.lastrowid
+            conn.commit()
+
+            # Fetch the created student
+            student = conn.execute('SELECT * FROM students WHERE id = ?', (student_id,)).fetchone()
+            conn.close()
+
+            return jsonify(dict(student)), 201
+
+        except sqlite3.IntegrityError:
+            return jsonify({'error': 'Email already exists'}), 409
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+@app.route('/api/students/<int:student_id>')
+def api_get_student(student_id):
+    """API endpoint to get a single student in JSON format"""
     conn = get_db_connection()
-    students = conn.execute('SELECT * FROM students ORDER BY registration_date DESC').fetchall()
+    student = conn.execute('SELECT * FROM students WHERE id = ?', (student_id,)).fetchone()
     conn.close()
     
-    # Convert to list of dictionaries
-    students_list = []
-    for student in students:
-        students_list.append(dict(student))
+    if student is None:
+        return jsonify({'error': 'Student not found'}), 404
     
-    return jsonify(students_list)
+    return jsonify(dict(student))
 
 if __name__ == '__main__':
     # Initialize database if it doesn't exist
